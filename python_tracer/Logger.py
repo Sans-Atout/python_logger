@@ -97,7 +97,7 @@ class Logger(object):
             else:
                 bar = bar + empty
         bar = bar + "]"
-        print("\r"+getFormatedDate+_YELLOW+bar+" "+"{:.2%}".format(prcent/100) +"\t["+after+"]",end='')
+        print("\r"+getBaseLog()+_YELLOW+bar+" "+"{:.2%}".format(prcent/100) +"\t["+after+"]",end='')
 
 def getBaseLog():
     return "["+getFormatedDate()+"]\t"
