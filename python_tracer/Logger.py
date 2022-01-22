@@ -85,7 +85,7 @@ class Logger(object):
         f.close()
         return
 
-    def avancement(prcent,after="*"):
+    def avancement(self,prcent,after="*"):
         length = 33
         before="*"
         empty = "-"
@@ -98,8 +98,6 @@ class Logger(object):
                 bar = bar + empty
         bar = bar + "]"
         print("\r"+getFormatedDate+_YELLOW+bar+" "+"{:.2%}".format(prcent/100) +"\t["+after+"]",end='')
-        #if prcent >= 100:
-        #    self.log_value = bar+" "+"{:.2%}".format(prcent/100) +"\t["+after+"]",end='')
 
 def getBaseLog():
     return "["+getFormatedDate()+"]\t"
