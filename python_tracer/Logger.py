@@ -1,18 +1,22 @@
 from time import localtime, strftime
 from os import path
 
-# Define nice print function
-_BASE_COLOR = "\033["
-_RED = _BASE_COLOR+"31m"
-_GREEN = _BASE_COLOR+"32m"
-_YELLOW = _BASE_COLOR+"33m"
-_BLUE = _BASE_COLOR+"34m"
-_PURPLE = _BASE_COLOR+"35m"
-_LBLUE = _BASE_COLOR+"36m"
-_WHITE = _BASE_COLOR+"37m"
-_RESET = _BASE_COLOR+"0m"
+from colorama import init
+from colorama import Fore, Style
 
-_PATERN = r"\033[[0-9]+m"
+init()
+
+_COLOR = {
+        'INFO': Style.BRIGHT + Fore.BLUE,
+        'DEBUG': Style.BRIGHT + Fore.MAGENTA,
+        'DONE': Style.BRIGHT + Fore.GREEN,
+        'GREY' : Style.BRIGHT + Fore.LIGHTBLACK_EX,
+        'WARNING': Style.BRIGHT + Fore.YELLOW,
+        'ERROR': Style.BRIGHT + Fore.RED,
+        'FATAL': Style.BRIGHT + Fore.RED,
+        'DEFAULT': Style.BRIGHT + Fore.WHITE,
+        'END': Style.RESET_ALL,
+    }
 
 class VerboseLevel(object):
     """docstring for VerboseLevel."""
@@ -23,10 +27,11 @@ class VerboseLevel(object):
 class Logger(object):
     """docstring for Logger."""
 
-    def __init__(self,log_dir, verbose_level, service_name=None, log_extension=None):
+    def __init__(self,log_dir, verbose_level, service_name=None, log_extension=None, separator=';'):
         self.dir_path = log_dir if log_dir[-1] == '/' else log_dir+'/'
         self.log_extension = "."+log_extension if log_extension != None else ".log"
-        self.service_name = "" if service_name == None else service_name +"-"
+        self.service_name = "" if service_name == None else service_name
+        self.separator = separator
         if not path.isdir(self.dir_path):
             self.fatal("The path to the log folder does not exist")
 
@@ -38,46 +43,48 @@ class Logger(object):
             self.error("You have set the wrong log level. Only level 1, 2 or 3 are tolerated!")
             self.warning("Default level verbose: PROD")
 
-
-
     def info(self,value):
-        self.log_value = "[INFO\t\t] "+_RESET+str(value)
-        self.write(_LBLUE)
+        self.log_value = ("INFO",str(value))
+        self.write()
         return
 
     def warning(self,value):
-        self.log_value = "[WARNING] "+str(value)
-        self.write(_YELLOW)
+        self.log_value = ("WARNING",str(value))
+        self.write()
         return
 
     def fatal(self,value):
-        self.log_value = "[FATAL\t] "+str(value)
-        self.print(_RED)
+        self.log_value = ("FATAL",str(value))
+        self.print()
         exit(-1)
 
     def error(self, value):
-        self.log_value = "[ERROR\t] "+str(value)
-        self.write(_RED)
+        self.log_value = ("ERROR",str(value))
+        self.write()
         return
 
     def debug(self, value):
-        self.log_value = "[DEBUG\t] "+_RESET+str(value)
-        self.write(_PURPLE)
+        self.log_value = ("DEBUG",str(value))
+        self.write()
         return
 
     def done(self, value):
-        self.log_value = "[DONE\t\t] "+_RESET+str(value)
-        self.write(_GREEN)
+        self.log_value = ("DONE",str(value))
+        self.write()
         return
 
-    def print(self, color):
-        print(_RESET + getBaseLog()+color+self.log_value.replace("\t\t",'\t'))
+    def print(self):
+        service = str(self.service_name).replace("_", " ")
+        logLine = setColor("END")+"["+setColor("GREY")+getFormatedDate()+setColor("END")+"]\t["
+        lvl = self.log_value[0] if(self.log_value[0] == "WARNING") else self.log_value[0]+'\t'
+        logLine = logLine + setColor(self.log_value[0])+lvl+setColor("END")+"] ["+setColor("GREY")+service+setColor("END")+"]\t"
+        print(logLine + self.log_value[1])
         return
 
-    def write(self, color):
-        self.print(color)
-        line = getBaseLog()+self.log_value.replace(_RESET,'')
-        file_name = self.service_name+strftime("%Y-%m-%d", localtime())
+    def write(self):
+        self.print()
+        line = getFormatedDate() + self.separator+self.log_value[0]+self.separator+self.log_value[1]
+        file_name = strftime("%Y-%m-%d", localtime())+"-"+self.service_name
         file_name = file_name + self.log_extension
         path = self.dir_path+file_name
         f = open(path,'a')
@@ -97,10 +104,7 @@ class Logger(object):
             else:
                 bar = bar + empty
         bar = bar + "]"
-        print("\r"+getBaseLog()+_YELLOW+bar+" "+"{:.2%}".format(prcent/100) +"\t["+after+"]",end='')
-
-def getBaseLog():
-    return "["+getFormatedDate()+"]\t"
+        print("\r"+setColor("END")+"["+setColor("GREY")+getFormatedDate()+setColor("END")+"]\t"+setColor("WARNING")+bar+" "+"{:.2%}".format(prcent/100) +"\t["+after+"]",end='')
 
 def getFormatedDate():
     return strftime("%Y-%m-%d %H:%M:%S", localtime())
@@ -108,3 +112,5 @@ def getFormatedDate():
 def isVerboseLevel(possible):
     v = VerboseLevel()
     return v.DEV == possible or v.PROD == possible or v.PROD_EXTEND == possible
+def setColor(cName):
+    return _COLOR[cName]
